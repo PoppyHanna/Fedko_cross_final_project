@@ -5,6 +5,7 @@ import TabNavigator from './TabNavigator';
 import SettingsScreen from '../screens/SettingsScreen';
 import AboutScreen from '../screens/AboutScreen';
 import ContactScreen from '../screens/ContactScreen';
+import FavoritesScreen from '../screens/FavoritesScreen';
 import { SCREENS } from '../constants/screens';
 import { COLORS } from '../constants/colors';
 
@@ -12,6 +13,10 @@ const Drawer = createDrawerNavigator();
 
 const HomeIcon = ({ color, size }) => (
   <MaterialCommunityIcons name="home-outline" size={size} color={color} />
+);
+
+const FavoritesIcon = ({ color, size }) => (
+  <MaterialCommunityIcons name="heart-outline" size={size} color={color} />
 );
 
 const SettingsIcon = ({ color, size }) => (
@@ -35,12 +40,14 @@ const DrawerNavigator = () => {
     // Drawer provides access to additional application screens
     // outside the main bottom tab navigation.
     <Drawer.Navigator
+      backBehavior="history"
       screenOptions={{
         headerStyle: {
           backgroundColor: COLORS.background,
         },
 
         headerTintColor: COLORS.textPrimary,
+        headerTitleAlign: 'center',
 
         headerTitleStyle: {
           fontWeight: '600',
@@ -61,6 +68,16 @@ const DrawerNavigator = () => {
           title: 'Home',
           headerShown: false,
           drawerIcon: HomeIcon,
+        }}
+      />
+
+      <Drawer.Screen
+        name={SCREENS.FAVORITES}
+        component={FavoritesScreen}
+        options={{
+          title: 'Favorites',
+          drawerIcon: FavoritesIcon,
+          headerShown: false,
         }}
       />
 

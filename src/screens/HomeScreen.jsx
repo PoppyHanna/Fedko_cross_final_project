@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { DrawerActions } from '@react-navigation/native';
 import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
@@ -9,12 +10,21 @@ import SearchInput from '../components/SearchInput/SearchInput';
 import CategoryCard from '../components/CategoryCard/CategoryCard';
 import VerticalProductCard from '../components/VerticalProductCard/VerticalProductCard';
 
+import { useUser } from '../context/UserContext';
+import { toggleFavorite } from '../redux/favoritesSlice';
+
 import { SCREENS } from '../constants/screens';
 import { COLORS } from '../constants/colors';
 
 const HomeScreen = ({ navigation }) => {
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState([]);
+
+  const dispatch = useDispatch();
+
+  const favorites = useSelector(state => state.favorites.items);
+
+  const { user } = useUser();
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -54,7 +64,7 @@ const HomeScreen = ({ navigation }) => {
           />
         </TouchableOpacity>
       </View>
-      <Text style={styles.title}>Good morning!</Text>
+      <Text style={styles.title}>Good morning, {user.name}!</Text>
       <Text style={styles.subtitle}>What do you like?</Text>
 
       <SearchInput
@@ -111,6 +121,11 @@ const HomeScreen = ({ navigation }) => {
             title={product.name}
             image={{ uri: product.image }}
             price={`$${Number(product.mediumPrice).toFixed(2)}`}
+            isFavorite={favorites.some(
+              favorite =>
+                (favorite.id ?? favorite.name) === (product.id ?? product.name),
+            )}
+            onFavoritePress={() => dispatch(toggleFavorite(product))}
             onPress={() =>
               navigation.navigate(SCREENS.COFFEE_DETAILS, {
                 productId: product.id,

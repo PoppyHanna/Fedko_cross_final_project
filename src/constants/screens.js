@@ -8,6 +8,7 @@ export const SCREENS = {
   COFFEE_DETAILS: 'CoffeeDetails',
   CHECKOUT: 'Checkout',
   CATEGORY_PRODUCTS: 'CategoryProducts',
+  FAVORITES: 'Favorites',
   SETTINGS: 'Settings',
   ABOUT: 'About',
   CONTACT: 'Contact',

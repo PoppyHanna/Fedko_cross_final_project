@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts } from '../api/api';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +19,8 @@ import SearchInput from '../components/SearchInput/SearchInput';
 import CategoryCard from '../components/CategoryCard/CategoryCard';
 import HorizontalProductCard from '../components/HorizontalProductCard/HorizontalProductCard';
 
+import { toggleFavorite } from '../redux/favoritesSlice';
+
 import { SCREENS } from '../constants/screens';
 import { COLORS } from '../constants/colors';
 
@@ -27,6 +30,9 @@ const MenuScreen = ({ navigation }) => {
   const [apiProducts, setApiProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const dispatch = useDispatch();
+  const favorites = useSelector(state => state.favorites.items);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -145,6 +151,11 @@ const MenuScreen = ({ navigation }) => {
             image={{ uri: item.image }}
             title={item.shortName}
             price={Number(item.mediumPrice).toFixed(2)}
+            isFavorite={favorites.some(
+              favorite =>
+                (favorite.id ?? favorite.name) === (item.id ?? item.name),
+            )}
+            onFavoritePress={() => dispatch(toggleFavorite(item))}
             onPress={() =>
               navigation.navigate(SCREENS.COFFEE_DETAILS, {
                 productId: item.id,

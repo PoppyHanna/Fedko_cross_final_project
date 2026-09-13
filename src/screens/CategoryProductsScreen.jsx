@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   View,
   Text,
@@ -17,6 +18,7 @@ import SearchInput from '../components/SearchInput/SearchInput';
 import HorizontalProductCard from '../components/HorizontalProductCard/HorizontalProductCard';
 
 import { fetchProducts } from '../api/api';
+import { toggleFavorite } from '../redux/favoritesSlice';
 import { SCREENS } from '../constants/screens';
 import { COLORS } from '../constants/colors';
 import { SHADOWS } from '../constants/shadows';
@@ -49,6 +51,9 @@ const CategoryProductsScreen = ({ navigation, route }) => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const dispatch = useDispatch();
+  const favorites = useSelector(state => state.favorites.items);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -160,6 +165,11 @@ const CategoryProductsScreen = ({ navigation, route }) => {
             image={{ uri: item.image }}
             title={item.shortName}
             price={Number(item.mediumPrice).toFixed(2)}
+            isFavorite={favorites.some(
+              favorite =>
+                (favorite.id ?? favorite.name) === (item.id ?? item.name),
+            )}
+            onFavoritePress={() => dispatch(toggleFavorite(item))}
             onPress={() =>
               navigation.navigate(SCREENS.COFFEE_DETAILS, {
                 productId: item.id,

@@ -12,7 +12,14 @@ import MaterialCommunityIcons from '@react-native-vector-icons/material-design-i
 import { COLORS } from '../../constants/colors';
 import { SHADOWS } from '../../constants/shadows';
 
-const HorizontalProductCard = ({ image, title, price, onPress }) => {
+const HorizontalProductCard = ({
+  image,
+  title,
+  price,
+  onPress,
+  isFavorite,
+  onFavoritePress,
+}) => {
   const { width } = useWindowDimensions();
 
   // Use a slightly wider image on larger screens.
@@ -35,21 +42,17 @@ const HorizontalProductCard = ({ image, title, price, onPress }) => {
             {title}
           </Text>
 
-          <MaterialCommunityIcons
-            name="heart-outline"
-            size={18}
-            color={COLORS.primaryBrown}
-          />
+          <TouchableOpacity onPress={onFavoritePress} activeOpacity={0.7}>
+            <MaterialCommunityIcons
+              name={isFavorite ? 'heart' : 'heart-outline'}
+              size={18}
+              color={COLORS.primaryBrown}
+            />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.priceRow}>
           <Text style={styles.price}>${price}</Text>
-
-          <MaterialCommunityIcons
-            name="plus"
-            size={22}
-            color={COLORS.primaryBrown}
-          />
         </View>
       </View>
     </TouchableOpacity>

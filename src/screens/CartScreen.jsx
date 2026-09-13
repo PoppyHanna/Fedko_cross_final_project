@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -13,14 +14,16 @@ import PromoCodeInput from '../components/PromoCodeInput/PromoCodeInput';
 import CustomButton from '../components/CustomButton/CustomButton';
 import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
 
-import { useCart } from '../context/CartContext';
+import { removeItem, updateQuantity, updateSize } from '../redux/cartSlice';
 import { SCREENS } from '../constants/screens';
 import { COLORS } from '../constants/colors';
 
 const CartScreen = ({ navigation }) => {
   const [promoCode, setPromoCode] = useState('');
+  const [openSizeIndex, setOpenSizeIndex] = useState(null);
 
-  const { cartItems, removeFromCart } = useCart();
+  const cartItems = useSelector(state => state.cart.items);
+  const dispatch = useDispatch();
 
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
@@ -70,8 +73,119 @@ const CartScreen = ({ navigation }) => {
                 <View style={styles.info}>
                   <Text style={styles.name}>{item.name}</Text>
 
-                  <Text style={styles.details}>Size: {item.size}</Text>
-                  <Text style={styles.details}>Quantity: {item.quantity}</Text>
+                  <View style={styles.sizeContainer}>
+                    <TouchableOpacity
+                      style={styles.sizeRow}
+                      onPress={() =>
+                        setOpenSizeIndex(openSizeIndex === index ? null : index)
+                      }
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.details}>Size:</Text>
+
+                      <View style={styles.selectedSize}>
+                        <Text style={styles.sizeValue}>{item.size}</Text>
+
+                        <MaterialCommunityIcons
+                          name={
+                            openSizeIndex === index
+                              ? 'chevron-up'
+                              : 'chevron-down'
+                          }
+                          size={18}
+                          color={COLORS.primaryBrown}
+                        />
+                      </View>
+                    </TouchableOpacity>
+
+                    {openSizeIndex === index && (
+                      <View style={styles.sizeOptions}>
+                        {['Small', 'Medium', 'Large'].map(size => {
+                          const priceMap = {
+                            Small: Number(item.smallPrice),
+                            Medium: Number(item.mediumPrice),
+                            Large: Number(item.largePrice),
+                          };
+
+                          const isActive = item.size === size;
+
+                          return (
+                            <TouchableOpacity
+                              key={size}
+                              style={[
+                                styles.sizeButton,
+                                isActive && styles.activeSizeButton,
+                              ]}
+                              onPress={() => {
+                                dispatch(
+                                  updateSize({
+                                    index,
+                                    size,
+                                    price: priceMap[size],
+                                  }),
+                                );
+
+                                setOpenSizeIndex(null);
+                              }}
+                              activeOpacity={0.7}
+                            >
+                              <Text
+                                style={[
+                                  styles.sizeButtonText,
+                                  isActive && styles.activeSizeButtonText,
+                                ]}
+                              >
+                                {size}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.quantityRow}>
+                    <Text style={styles.details}>Quantity:</Text>
+                    <View style={styles.quantityControls}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          dispatch(
+                            updateQuantity({
+                              index,
+                              quantity: Math.max(1, item.quantity - 1),
+                            }),
+                          )
+                        }
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons
+                          name="minus"
+                          size={20}
+                          color={COLORS.primaryBrown}
+                        />
+                      </TouchableOpacity>
+
+                      <Text style={styles.quantityValue}>{item.quantity}</Text>
+
+                      <TouchableOpacity
+                        onPress={() =>
+                          dispatch(
+                            updateQuantity({
+                              index,
+                              quantity: item.quantity + 1,
+                            }),
+                          )
+                        }
+                        activeOpacity={0.7}
+                      >
+                        <MaterialCommunityIcons
+                          name="plus"
+                          size={20}
+                          color={COLORS.primaryBrown}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
 
                   <View style={styles.priceRow}>
                     <Text style={styles.price}>
@@ -79,7 +193,7 @@ const CartScreen = ({ navigation }) => {
                     </Text>
 
                     <TouchableOpacity
-                      onPress={() => removeFromCart(index)}
+                      onPress={() => dispatch(removeItem(index))}
                       activeOpacity={0.7}
                     >
                       <MaterialCommunityIcons
@@ -204,6 +318,75 @@ const styles = StyleSheet.create({
   details: {
     fontSize: 14,
     color: COLORS.textSecondary,
+  },
+
+  sizeContainer: {
+    width: '100%',
+  },
+
+  sizeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  selectedSize: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+
+  sizeValue: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+
+  sizeOptions: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 6,
+  },
+
+  sizeButton: {
+    flex: 1,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.primaryBrown,
+    alignItems: 'center',
+  },
+
+  activeSizeButton: {
+    backgroundColor: COLORS.primaryBrown,
+  },
+
+  sizeButtonText: {
+    fontSize: 11,
+    color: COLORS.primaryBrown,
+  },
+
+  activeSizeButtonText: {
+    color: COLORS.background,
+  },
+
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+
+  quantityValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    minWidth: 18,
+    textAlign: 'center',
   },
 
   priceRow: {

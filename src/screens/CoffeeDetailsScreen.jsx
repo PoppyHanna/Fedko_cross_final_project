@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
 
 import SizeButton from '../components/SizeButton/SizeButton';
 import CustomButton from '../components/CustomButton/CustomButton';
-import { useCart } from '../context/CartContext';
+import { addItem } from '../redux/cartSlice';
+import { toggleFavorite } from '../redux/favoritesSlice';
 import { COLORS } from '../constants/colors';
 
 const CoffeeDetailsScreen = ({ route, navigation }) => {
@@ -13,7 +15,14 @@ const CoffeeDetailsScreen = ({ route, navigation }) => {
   const [selectedSize, setSelectedSize] = useState('Medium');
   const [quantity, setQuantity] = useState(1);
 
-  const { addToCart } = useCart();
+  const dispatch = useDispatch();
+
+  const favorites = useSelector(state => state.favorites.items);
+
+  const isFavorite = favorites.some(
+    favorite =>
+      (favorite.id ?? favorite.name) === (product?.id ?? product?.name),
+  );
 
   if (!product) {
     return (
@@ -56,9 +65,12 @@ const CoffeeDetailsScreen = ({ route, navigation }) => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={() => dispatch(toggleFavorite(product))}
+            activeOpacity={0.7}
+          >
             <MaterialCommunityIcons
-              name="heart-outline"
+              name={isFavorite ? 'heart' : 'heart-outline'}
               size={24}
               color={COLORS.primaryBrown}
             />
@@ -135,7 +147,14 @@ const CoffeeDetailsScreen = ({ route, navigation }) => {
               <CustomButton
                 title="Add to Cart"
                 onPress={() => {
-                  addToCart(product, selectedSize, quantity, selectedPrice);
+                  dispatch(
+                    addItem({
+                      ...product,
+                      size: selectedSize,
+                      quantity,
+                      price: selectedPrice,
+                    }),
+                  );
                 }}
               />
             </View>

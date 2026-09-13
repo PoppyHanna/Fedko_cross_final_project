@@ -1,3 +1,4 @@
+import { useSelector } from 'react-redux';
 import {
   View,
   Text,
@@ -9,18 +10,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
 
 import CustomButton from '../components/CustomButton/CustomButton';
-import { useCart } from '../context/CartContext';
+import { TAX_RATE } from '../constants/taxes';
+
 import { COLORS } from '../constants/colors';
 
 const CheckoutScreen = ({ navigation }) => {
-  const { cartItems } = useCart();
+  const cartItems = useSelector(state => state.cart.items);
 
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0,
   );
 
-  const tax = subtotal * 0.08;
+  const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
   return (
