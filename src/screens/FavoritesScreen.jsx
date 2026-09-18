@@ -5,6 +5,7 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
@@ -17,6 +18,23 @@ import { SCREENS } from '../constants/screens';
 const FavoritesScreen = ({ navigation }) => {
   const dispatch = useDispatch();
   const favorites = useSelector(state => state.favorites.items);
+
+  const handleFavoritePress = useCallback(
+    product => {
+      dispatch(toggleFavorite(product));
+    },
+    [dispatch],
+  );
+
+  const handleProductPress = useCallback(
+    product => {
+      navigation.navigate(SCREENS.COFFEE_DETAILS, {
+        productId: product.id,
+        product,
+      });
+    },
+    [navigation],
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -49,19 +67,16 @@ const FavoritesScreen = ({ navigation }) => {
             item?.id ? String(item.id) : `${item.name}-${index}`
           }
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <HorizontalProductCard
-              image={{ uri: item.image }}
+              product={item}
+              imageUri={item.image}
               title={item.name}
               price={Number(item.mediumPrice).toFixed(2)}
               isFavorite={true}
-              onFavoritePress={() => dispatch(toggleFavorite(item))}
-              onPress={() =>
-                navigation.navigate(SCREENS.COFFEE_DETAILS, {
-                  productId: item.id,
-                  product: item,
-                })
-              }
+              onFavoritePress={handleFavoritePress}
+              onPress={handleProductPress}
             />
           )}
         />

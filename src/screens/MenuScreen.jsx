@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProducts } from '../api/api';
 
@@ -30,9 +30,22 @@ const MenuScreen = ({ navigation }) => {
   const [apiProducts, setApiProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const dispatch = useDispatch();
   const favorites = useSelector(state => state.favorites.items);
+
+  const filteredProducts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    if (!query) {
+      return apiProducts;
+    }
+
+    return apiProducts.filter(product =>
+      product.name.toLowerCase().includes(query),
+    );
+  }, [apiProducts, searchQuery]);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -54,6 +67,23 @@ const MenuScreen = ({ navigation }) => {
     loadProducts();
   }, []);
 
+  const handleFavoritePress = useCallback(
+    product => {
+      dispatch(toggleFavorite(product));
+    },
+    [dispatch],
+  );
+
+  const handleProductPress = useCallback(
+    product => {
+      navigation.navigate(SCREENS.COFFEE_DETAILS, {
+        productId: product.id,
+        product,
+      });
+    },
+    [navigation],
+  );
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -74,7 +104,7 @@ const MenuScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <FlatList
-        data={apiProducts}
+        data={filteredProducts}
         keyExtractor={(item, index) =>
           item?.id ? String(item.id) : String(index)
         }
@@ -109,7 +139,7 @@ const MenuScreen = ({ navigation }) => {
 
             <SearchInput
               placeholder="Search for coffee..."
-              onChangeText={() => {}}
+              onChangeText={setSearchQuery}
             />
 
             <View style={styles.categories}>
@@ -148,20 +178,16 @@ const MenuScreen = ({ navigation }) => {
         }
         renderItem={({ item }) => (
           <HorizontalProductCard
-            image={{ uri: item.image }}
+            product={item}
+            imageUri={item.image}
             title={item.shortName}
             price={Number(item.mediumPrice).toFixed(2)}
             isFavorite={favorites.some(
               favorite =>
                 (favorite.id ?? favorite.name) === (item.id ?? item.name),
             )}
-            onFavoritePress={() => dispatch(toggleFavorite(item))}
-            onPress={() =>
-              navigation.navigate(SCREENS.COFFEE_DETAILS, {
-                productId: item.id,
-                product: item,
-              })
-            }
+            onFavoritePress={handleFavoritePress}
+            onPress={handleProductPress}
           />
         )}
       />

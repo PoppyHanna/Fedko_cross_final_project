@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   View,
@@ -74,15 +74,33 @@ const CategoryProductsScreen = ({ navigation, route }) => {
     loadProducts();
   }, []);
 
-  const filteredProducts = products.filter(product => {
-    const matchesCategory = product.category === activeCategory;
+  const filteredProducts = useMemo(() => {
+    const query = search.trim().toLowerCase();
 
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(search.toLowerCase());
+    return products.filter(product => {
+      const matchesCategory = product.category === activeCategory;
+      const matchesSearch = product.name.toLowerCase().includes(query);
 
-    return matchesCategory && matchesSearch;
-  });
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, activeCategory, search]);
+
+  const handleFavoritePress = useCallback(
+    product => {
+      dispatch(toggleFavorite(product));
+    },
+    [dispatch],
+  );
+
+  const handleProductPress = useCallback(
+    product => {
+      navigation.navigate(SCREENS.COFFEE_DETAILS, {
+        productId: product.id,
+        product,
+      });
+    },
+    [navigation],
+  );
 
   if (loading) {
     return (
@@ -162,20 +180,16 @@ const CategoryProductsScreen = ({ navigation, route }) => {
         }
         renderItem={({ item }) => (
           <HorizontalProductCard
-            image={{ uri: item.image }}
+            product={item}
+            imageUri={item.image}
             title={item.shortName}
             price={Number(item.mediumPrice).toFixed(2)}
             isFavorite={favorites.some(
               favorite =>
                 (favorite.id ?? favorite.name) === (item.id ?? item.name),
             )}
-            onFavoritePress={() => dispatch(toggleFavorite(item))}
-            onPress={() =>
-              navigation.navigate(SCREENS.COFFEE_DETAILS, {
-                productId: item.id,
-                product: item,
-              })
-            }
+            onFavoritePress={handleFavoritePress}
+            onPress={handleProductPress}
           />
         )}
       />

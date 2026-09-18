@@ -1,8 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import SizeButton from '../components/SizeButton/SizeButton';
 import CustomButton from '../components/CustomButton/CustomButton';
@@ -14,6 +19,9 @@ const CoffeeDetailsScreen = ({ route, navigation }) => {
   const { product } = route.params || {};
   const [selectedSize, setSelectedSize] = useState('Medium');
   const [quantity, setQuantity] = useState(1);
+  const [showCartMessage, setShowCartMessage] = useState(false);
+  const messageOpacity = useSharedValue(0);
+  const messageTranslateY = useSharedValue(6);
 
   const dispatch = useDispatch();
 
@@ -24,6 +32,18 @@ const CoffeeDetailsScreen = ({ route, navigation }) => {
       (favorite.id ?? favorite.name) === (product?.id ?? product?.name),
   );
 
+  useEffect(() => {
+    if (showCartMessage) {
+      messageOpacity.value = withTiming(1, { duration: 500 });
+      messageTranslateY.value = withTiming(0, { duration: 500 });
+    }
+  }, [showCartMessage, messageOpacity, messageTranslateY]);
+
+  const animatedMessageStyle = useAnimatedStyle(() => ({
+    opacity: messageOpacity.value,
+    transform: [{ translateY: messageTranslateY.value }],
+  }));
+
   if (!product) {
     return (
       <View style={styles.errorContainer}>
@@ -31,6 +51,7 @@ const CoffeeDetailsScreen = ({ route, navigation }) => {
       </View>
     );
   }
+
   const prices = {
     Small: Number(product.smallPrice),
     Medium: Number(product.mediumPrice),
@@ -50,6 +71,29 @@ const CoffeeDetailsScreen = ({ route, navigation }) => {
   const increaseQuantity = () => {
     setQuantity(quantity + 1);
   };
+
+  const handleAddToCart = () => {
+    dispatch(
+      addItem({
+        ...product,
+        size: selectedSize,
+        quantity,
+        price: selectedPrice,
+      }),
+    );
+
+    setShowCartMessage(true);
+
+    setTimeout(() => {
+      messageOpacity.value = withTiming(0, { duration: 300 });
+      messageTranslateY.value = withTiming(6, { duration: 300 });
+
+      setTimeout(() => {
+        setShowCartMessage(false);
+      }, 300);
+    }, 1500);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
@@ -144,21 +188,20 @@ const CoffeeDetailsScreen = ({ route, navigation }) => {
             </Text>
 
             <View style={styles.addButton}>
-              <CustomButton
-                title="Add to Cart"
-                onPress={() => {
-                  dispatch(
-                    addItem({
-                      ...product,
-                      size: selectedSize,
-                      quantity,
-                      price: selectedPrice,
-                    }),
-                  );
-                }}
-              />
+              <CustomButton title="Add to Cart" onPress={handleAddToCart} />
             </View>
           </View>
+
+          {showCartMessage && (
+            <Animated.View style={[styles.cartMessage, animatedMessageStyle]}>
+              <MaterialCommunityIcons
+                name="check-circle"
+                size={20}
+                color={COLORS.white}
+              />
+              <Text style={styles.cartMessageText}>Added to cart</Text>
+            </Animated.View>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -293,6 +336,27 @@ const styles = StyleSheet.create({
   addButton: {
     width: 174,
     borderRadius: 200,
+  },
+
+  cartMessage: {
+    position: 'absolute',
+    bottom: 55,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: COLORS.primaryBrown,
+    zIndex: 10,
+  },
+
+  cartMessageText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.white,
   },
 });
 

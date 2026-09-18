@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   View,
@@ -54,8 +54,33 @@ const PopularProductsScreen = ({ navigation }) => {
     loadProducts();
   }, []);
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(search.toLowerCase()),
+  const filteredProducts = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) {
+      return products;
+    }
+
+    return products.filter(product =>
+      product.name.toLowerCase().includes(query),
+    );
+  }, [products, search]);
+
+  const handleFavoritePress = useCallback(
+    product => {
+      dispatch(toggleFavorite(product));
+    },
+    [dispatch],
+  );
+
+  const handleProductPress = useCallback(
+    product => {
+      navigation.navigate(SCREENS.COFFEE_DETAILS, {
+        productId: product.id,
+        product,
+      });
+    },
+    [navigation],
   );
 
   if (loading) {
@@ -111,20 +136,16 @@ const PopularProductsScreen = ({ navigation }) => {
         }
         renderItem={({ item }) => (
           <HorizontalProductCard
-            image={{ uri: item.image }}
+            product={item}
+            imageUri={item.image}
             title={item.shortName}
             price={Number(item.mediumPrice).toFixed(2)}
             isFavorite={favorites.some(
               favorite =>
                 (favorite.id ?? favorite.name) === (item.id ?? item.name),
             )}
-            onFavoritePress={() => dispatch(toggleFavorite(item))}
-            onPress={() =>
-              navigation.navigate(SCREENS.COFFEE_DETAILS, {
-                productId: item.id,
-                product: item,
-              })
-            }
+            onFavoritePress={handleFavoritePress}
+            onPress={handleProductPress}
           />
         )}
       />

@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Image,
   StyleSheet,
@@ -13,7 +14,8 @@ import { COLORS } from '../../constants/colors';
 import { SHADOWS } from '../../constants/shadows';
 
 const HorizontalProductCard = ({
-  image,
+  product,
+  imageUri,
   title,
   price,
   onPress,
@@ -26,9 +28,13 @@ const HorizontalProductCard = ({
   const isLandscape = width > 600;
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => onPress(product)}
+      activeOpacity={0.8}
+    >
       <Image
-        source={image}
+        source={{ uri: imageUri }}
         style={[
           styles.image,
           isLandscape ? styles.imageLandscape : styles.imagePortrait,
@@ -42,7 +48,10 @@ const HorizontalProductCard = ({
             {title}
           </Text>
 
-          <TouchableOpacity onPress={onFavoritePress} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={() => onFavoritePress(product)}
+            activeOpacity={0.7}
+          >
             <MaterialCommunityIcons
               name={isFavorite ? 'heart' : 'heart-outline'}
               size={18}
@@ -117,4 +126,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HorizontalProductCard;
+export default React.memo(HorizontalProductCard);

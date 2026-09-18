@@ -1,4 +1,4 @@
-# Cross Assignment 6
+# Cross Assignment 7
 
 ## Description
 
@@ -6,11 +6,11 @@ CoffeeToGo is a React Native coffee shop application.
 
 The application uses Stack Navigator, Bottom Tab Navigator, and Drawer Navigator for navigation. Product data is loaded from a REST API using the Fetch API and displayed dynamically throughout the application.
 
-This version of the project focuses on global state management using Context API and Redux Toolkit.
+This version of the project focuses on animations, performance optimization, render optimization, dependency analysis, and bundle analysis.
 
-Context API is used to manage user profile information across different screens. Redux Toolkit is used to manage the shopping cart and favorite products.
+The application also uses Context API for user profile information and Redux Toolkit for shopping cart and favorite products.
 
-The project also includes REST API integration, product filtering, search, cart management, favorites, product details, and checkout functionality.
+The project includes REST API integration, product filtering, search, cart management, favorites, product details, checkout functionality, animations, and performance optimizations.
 
 ## Global State Management
 
@@ -167,6 +167,13 @@ Drawer Navigator
 - Back navigation
 - Drawer swipe gesture
 - Product ID and product data passing between screens
+- Animated coffee size selection with React Native Reanimated
+- Animated "Added to cart" feedback
+- Product card render optimization with `React.memo`
+- Product filtering optimization with `useMemo`
+- Stable callbacks with `useCallback`
+- Dependency analysis with `depcheck`
+- Production bundle analysis with `source-map-explorer`
 
 ## API Integration
 
@@ -186,6 +193,7 @@ Products are loaded using a GET request with the Fetch API:
 import { API_URL } from '@env';
 
 // GET request to load all coffee products from MockAPI
+
 export const fetchProducts = async () => {
   const response = await fetch(API_URL);
 
@@ -290,6 +298,106 @@ Product not found
 
 instead of crashing.
 
+## Assignment 7 — Animation and Performance Optimization
+
+### Task 1. Performance Analysis
+
+The application was analyzed to identify components that could benefit from animation and performance optimization.
+
+- `SizeButton` was selected for animation because its active state changes when the user selects a coffee size.
+- `HorizontalProductCard` was identified as a frequently re-rendered component because it is reused across multiple product list screens.
+- Project dependencies and production bundle composition were analyzed using `depcheck` and `source-map-explorer`.
+
+### Task 2. Animation
+
+Animations were implemented using React Native Reanimated.
+
+The `SizeButton` component uses:
+
+- `useSharedValue`
+- `useAnimatedStyle`
+- `withSpring`
+
+When the selected coffee size changes, the active button smoothly scales to provide visual feedback.
+
+An additional animated "Added to cart" notification was implemented on the Coffee Details screen.
+
+The notification uses:
+
+- `useSharedValue`
+- `useAnimatedStyle`
+- `withTiming`
+
+After a product is added to the cart, the notification smoothly appears and automatically disappears.
+
+This provides immediate visual feedback without navigating the user away from the product details screen.
+
+### Task 3. Performance Optimization
+
+`HorizontalProductCard` was identified as a component that could re-render frequently because it is reused in several product lists.
+
+The component was wrapped with:
+
+```js
+React.memo(HorizontalProductCard)
+```
+
+This prevents unnecessary re-renders when the component props have not changed.
+
+Additional optimizations include:
+
+- `useMemo` for product filtering
+- `useCallback` for stable favorite callbacks
+- `useCallback` for stable product navigation callbacks
+- Stable primitive `imageUri` values instead of creating new image objects during every render
+
+The optimizations were applied to:
+
+- Menu
+- Popular Products
+- Category Products
+- Favorites
+
+Console logging was used before and after optimization to verify component rendering behavior.
+
+Before optimization, multiple product cards could render again when the parent component updated.
+
+After optimization, unchanged product cards avoid unnecessary re-renders when their props remain the same.
+
+### Task 4. Dependency Cleanup and Bundle Analysis
+
+Project dependencies were analyzed using `depcheck` and `source-map-explorer`.
+
+The bundle analysis showed that the largest runtime dependencies include:
+
+- `react-native-reanimated`
+- `react-native`
+- `@react-navigation`
+- `react-native-gesture-handler`
+
+These dependencies are actively required by the application and were therefore retained.
+
+The unused `@react-native/new-app-screen` dependency was identified and removed from the project.
+
+`react-native-dotenv` was also reported by `depcheck`. Manual verification of `babel.config.js` showed that it is required to load the API URL from the `.env` file, so this dependency was retained.
+
+No large replaceable utility dependencies such as `moment` or `lodash` were present in the project. Required runtime dependencies were therefore kept instead of introducing unnecessary architectural changes solely to reduce the bundle size.
+
+### Bundle Analysis Results
+
+The Android production bundle was generated and analyzed before and after dependency cleanup using `source-map-explorer`.
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| Bundle size | 2,636,429 bytes | 2,636,733 bytes |
+| Approximate size | 2.51 MB | 2.51 MB |
+
+The difference is only 304 bytes, so the runtime bundle size remained effectively unchanged.
+
+The removed dependency was not imported into the production JavaScript bundle. Therefore, removing it cleaned up the project dependencies but did not produce a measurable reduction in the runtime bundle.
+
+The analysis also confirmed that most of the production bundle consists of required React Native, Reanimated, navigation, and gesture handling modules.
+
 ## Technologies
 
 - React Native
@@ -305,7 +413,10 @@ instead of crashing.
 - MockAPI
 - React Native Vector Icons
 - React Native Safe Area Context
+- React Native Reanimated
 - react-native-dotenv
+- source-map-explorer
+- depcheck
 
 ## Testing
 
@@ -342,10 +453,15 @@ The following functionality was tested:
 - Product search
 - Remote API images
 - Coffee size selection
+- Animated size selection
+- Added to cart notification
 - Price changes depending on drink size
 - Checkout flow
+- Product card render optimization
+- Product filtering optimization
+- Bundle analysis
 
-The project was checked with ESLint with no errors or warnings.
+The project was checked with ESLint and completed without errors or warnings.
 
 `SafeAreaView` is used to support different screen areas and system UI.
 
@@ -403,11 +519,41 @@ The Profile screen allows the user to update global profile information using Co
 
 ![Profile](./src/assets/screenshots/profile.png)
 
+## Assignment 7 — Optimization Screenshots
+
+### Before Render Optimization
+
+![Before Render Optimization](./src/assets/screenshots/render_before.png)
+
+### After Render Optimization
+
+![After Render Optimization](./src/assets/screenshots/render_after.png)
+
+### Before Reanimated Size Selection
+
+![Size Animation](./src/assets/screenshots/coffee_details_before.png)
+
+### After Reanimated Size Selection
+
+![Size Animation](./src/assets/screenshots/coffee_details_after.png)
+
+### Added to Cart Animation
+
+![Added to Cart](./src/assets/screenshots/added_to_cart.png)
+
+### Bundle Analysis — Before
+
+![Bundle Analysis Before](./src/assets/screenshots/bundle_before.png)
+
+### Bundle Analysis — After
+
+![Bundle Analysis After](./src/assets/screenshots/bundle_after.png)
+
 ## Demo Video
 
-A short video demonstrating the application navigation, Context API, Redux cart, favorites, and other main functionality:
+A short video demonstrating the application navigation, Context API, Redux cart, favorites, animations, and other main functionality:
 
-[Watch Demo Video](./src/assets/video/app-demo-6.mp4)
+[Watch Demo Video](./src/assets/video/app_demo_7.mp4)
 
 ## Environment Variables
 
@@ -453,6 +599,7 @@ The project follows a modular structure.
 - Redux logic is separated into `cartSlice.js` and `favoritesSlice.js`.
 - Redux store configuration is separated into `store.js`.
 - Reusable UI components receive dynamic data through props.
+- Product list rendering is optimized with `React.memo`, `useMemo`, and `useCallback`.
 - Shared values such as colors are stored in constants.
 - Complex or non-obvious logic is documented with comments.
-- ESLint completes with no errors or warnings.
+- React Native Reanimated is used for interactive UI animations.
