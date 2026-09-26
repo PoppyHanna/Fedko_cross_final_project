@@ -14,24 +14,80 @@ import PromoCodeInput from '../components/PromoCodeInput/PromoCodeInput';
 import CustomButton from '../components/CustomButton/CustomButton';
 import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
 
-import { removeItem, updateQuantity, updateSize } from '../redux/cartSlice';
+import {
+  removeItem,
+  updateQuantity,
+  updateSize,
+  applyPromo,
+} from '../redux/cartSlice';
 import { SCREENS } from '../constants/screens';
 import { COLORS } from '../constants/colors';
 
 const CartScreen = ({ navigation }) => {
   const [promoCode, setPromoCode] = useState('');
+  const [promoMessage, setPromoMessage] = useState('');
   const [openSizeIndex, setOpenSizeIndex] = useState(null);
 
   const cartItems = useSelector(state => state.cart.items);
+  const appliedPromo = useSelector(state => state.cart.appliedPromo);
+
   const dispatch = useDispatch();
+
+  const promoCodes = {
+    WELCOME10: 0.1,
+    COFFEE15: 0.15,
+    SAVE20: 0.2,
+  };
 
   const subtotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0,
   );
 
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax;
+  const discount = appliedPromo ? subtotal * appliedPromo.discount : 0;
+
+  const discountedSubtotal = subtotal - discount;
+
+  const tax = discountedSubtotal * 0.08;
+
+  const total = discountedSubtotal + tax;
+
+  const showPromoMessage = message => {
+    setPromoMessage(message);
+
+    setTimeout(() => {
+      setPromoMessage('');
+    }, 2000);
+  };
+
+  const handleApplyPromoCode = () => {
+    const code = promoCode.trim().toUpperCase();
+
+    if (!code) {
+      showPromoMessage('Enter a promo code');
+      return;
+    }
+
+    if (!promoCodes[code]) {
+      showPromoMessage('Invalid promo code');
+      return;
+    }
+
+    if (appliedPromo?.code === code) {
+      showPromoMessage('Promo code already applied');
+      return;
+    }
+
+    dispatch(
+      applyPromo({
+        code,
+        discount: promoCodes[code],
+      }),
+    );
+
+    showPromoMessage(`${code} applied successfully`);
+    setPromoCode('');
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -214,15 +270,29 @@ const CartScreen = ({ navigation }) => {
           <PromoCodeInput
             value={promoCode}
             onChangeText={setPromoCode}
-            onSubmit={() => {}}
+            onSubmit={handleApplyPromoCode}
             placeholder="Add promo code"
           />
+
+          {promoMessage ? (
+            <Text style={styles.promoMessage}>{promoMessage}</Text>
+          ) : null}
 
           <View style={styles.summary}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal:</Text>
               <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
             </View>
+
+            {appliedPromo && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  Promo code ({appliedPromo.code}):
+                </Text>
+
+                <Text style={styles.summaryValue}>-${discount.toFixed(2)}</Text>
+              </View>
+            )}
 
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tax:</Text>
@@ -282,6 +352,13 @@ const styles = StyleSheet.create({
 
   cartList: {
     maxHeight: 356,
+    marginBottom: 16,
+  },
+
+  promoMessage: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginTop: -16,
     marginBottom: 16,
   },
 

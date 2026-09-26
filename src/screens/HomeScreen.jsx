@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Keyboard,
+} from 'react-native';
 import { DrawerActions } from '@react-navigation/native';
 import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
 
@@ -9,6 +16,7 @@ import { fetchProducts } from '../api/api';
 import SearchInput from '../components/SearchInput/SearchInput';
 import CategoryCard from '../components/CategoryCard/CategoryCard';
 import VerticalProductCard from '../components/VerticalProductCard/VerticalProductCard';
+import HorizontalProductCard from '../components/HorizontalProductCard/HorizontalProductCard';
 
 import { useUser } from '../context/UserContext';
 import { toggleFavorite } from '../redux/favoritesSlice';
@@ -39,9 +47,26 @@ const HomeScreen = ({ navigation }) => {
     loadProducts();
   }, []);
 
-  const popularProducts = products
-    .filter(product => product.popular)
-    .slice(0, 2);
+  const popularProducts = useMemo(
+    () =>
+      products
+        .filter(product => product.popular)
+        .sort((a, b) => Number(b.rating) - Number(a.rating))
+        .slice(0, 2),
+    [products],
+  );
+
+  const searchResults = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) return [];
+
+    return products.filter(product =>
+      product.name.toLowerCase().includes(query),
+    );
+  }, [products, search]);
+
+  const isSearching = search.trim().length > 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -73,68 +98,108 @@ const HomeScreen = ({ navigation }) => {
         placeholder="Search for coffee..."
       />
 
-      <View style={styles.categories}>
-        <CategoryCard
-          title="Hot coffee"
-          image={require('../assets/images/categories/hot_coffee.png')}
-          onPress={() =>
-            navigation.navigate(SCREENS.CATEGORY_PRODUCTS, {
-              category: 'hot',
-            })
+      {isSearching ? (
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item, index) =>
+            item?.id ? String(item.id) : `${item.name}-${index}`
           }
-        />
-
-        <CategoryCard
-          title="Cold coffee"
-          image={require('../assets/images/categories/cold_coffee.png')}
-          onPress={() =>
-            navigation.navigate(SCREENS.CATEGORY_PRODUCTS, {
-              category: 'cold',
-            })
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.searchResults}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No coffee found</Text>
           }
+          renderItem={({ item }) => (
+            <HorizontalProductCard
+              product={item}
+              imageUri={item.image}
+              title={item.shortName}
+              price={Number(item.mediumPrice).toFixed(2)}
+              isFavorite={favorites.some(
+                favorite =>
+                  (favorite.id ?? favorite.name) === (item.id ?? item.name),
+              )}
+              onFavoritePress={product => dispatch(toggleFavorite(product))}
+              onPress={product => {
+                Keyboard.dismiss();
+                navigation.navigate(SCREENS.COFFEE_DETAILS, {
+                  productId: product.id,
+                  product,
+                });
+              }}
+            />
+          )}
         />
+      ) : (
+        <>
+          <View style={styles.categories}>
+            <CategoryCard
+              title="Hot coffee"
+              image={require('../assets/images/categories/hot_coffee.png')}
+              onPress={() =>
+                navigation.navigate(SCREENS.CATEGORY_PRODUCTS, {
+                  category: 'hot',
+                })
+              }
+            />
 
-        <CategoryCard
-          title="Iced drinks"
-          image={require('../assets/images/categories/iced_drinks.png')}
-          onPress={() =>
-            navigation.navigate(SCREENS.CATEGORY_PRODUCTS, {
-              category: 'iced',
-            })
-          }
-        />
-      </View>
+            <CategoryCard
+              title="Cold coffee"
+              image={require('../assets/images/categories/cold_coffee.png')}
+              onPress={() =>
+                navigation.navigate(SCREENS.CATEGORY_PRODUCTS, {
+                  category: 'cold',
+                })
+              }
+            />
 
-      <View style={styles.popularHeader}>
-        <Text style={styles.sectionTitle}>Popular products</Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate(SCREENS.POPULAR_PRODUCTS)}
-        >
-          <Text style={styles.seeAll}>See all</Text>
-        </TouchableOpacity>
-      </View>
+            <CategoryCard
+              title="Iced drinks"
+              image={require('../assets/images/categories/iced_drinks.png')}
+              onPress={() =>
+                navigation.navigate(SCREENS.CATEGORY_PRODUCTS, {
+                  category: 'iced',
+                })
+              }
+            />
+          </View>
 
-      <View style={styles.productsRow}>
-        {popularProducts.map((product, index) => (
-          <VerticalProductCard
-            key={product?.id ? String(product.id) : `${product.name}-${index}`}
-            title={product.name}
-            image={{ uri: product.image }}
-            price={`$${Number(product.mediumPrice).toFixed(2)}`}
-            isFavorite={favorites.some(
-              favorite =>
-                (favorite.id ?? favorite.name) === (product.id ?? product.name),
-            )}
-            onFavoritePress={() => dispatch(toggleFavorite(product))}
-            onPress={() =>
-              navigation.navigate(SCREENS.COFFEE_DETAILS, {
-                productId: product.id,
-                product,
-              })
-            }
-          />
-        ))}
-      </View>
+          <View style={styles.popularHeader}>
+            <Text style={styles.sectionTitle}>Popular products</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate(SCREENS.POPULAR_PRODUCTS)}
+            >
+              <Text style={styles.seeAll}>See all</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.productsRow}>
+            {popularProducts.map((product, index) => (
+              <VerticalProductCard
+                key={
+                  product?.id ? String(product.id) : `${product.name}-${index}`
+                }
+                title={product.name}
+                image={{ uri: product.image }}
+                price={`$${Number(product.mediumPrice).toFixed(2)}`}
+                isFavorite={favorites.some(
+                  favorite =>
+                    (favorite.id ?? favorite.name) ===
+                    (product.id ?? product.name),
+                )}
+                onFavoritePress={() => dispatch(toggleFavorite(product))}
+                onPress={() =>
+                  navigation.navigate(SCREENS.COFFEE_DETAILS, {
+                    productId: product.id,
+                    product,
+                  })
+                }
+              />
+            ))}
+          </View>
+        </>
+      )}
     </SafeAreaView>
   );
 };
@@ -197,6 +262,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+  },
+
+  searchResults: {
+    paddingTop: 8,
+    paddingBottom: 24,
+    gap: 16,
+  },
+
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 32,
+    fontSize: 16,
+    color: COLORS.textSecondary,
   },
 });
 

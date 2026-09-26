@@ -12,4 +12,8 @@ export const SCREENS = {
   SETTINGS: 'Settings',
   ABOUT: 'About',
   CONTACT: 'Contact',
+  ORDER_HISTORY: 'OrderHistory',
+  LOGIN: 'Login',
+  SIGN_UP: 'SignUp',
+  PROFILE_SETTINGS: 'ProfileSettings',
 };

@@ -78,3 +78,7 @@ yarn-error.log
 .history/
 
 .env
+android/app/src/main/assets/index.android.bundle
+android/app/src/main/assets/index.android.bundle.map
+bundle-after.html
+bundle-before.html

@@ -6,7 +6,7 @@ import HomeStackNavigator from './HomeStackNavigator';
 import MenuStackNavigator from './MenuStackNavigator';
 import CartStackNavigator from './CartStackNavigator';
 
-import ProfileScreen from '../screens/ProfileScreen';
+import ProfileStackNavigator from './ProfileStackNavigator';
 
 import { SCREENS } from '../constants/screens';
 import { COLORS } from '../constants/colors';
@@ -94,7 +94,7 @@ const TabNavigator = () => {
 
       <Tab.Screen
         name={SCREENS.PROFILE}
-        component={ProfileScreen}
+        component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ProfileIcon,

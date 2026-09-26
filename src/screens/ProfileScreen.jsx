@@ -1,11 +1,4 @@
-import { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@react-native-vector-icons/material-design-icons/static';
 
@@ -14,24 +7,52 @@ import { SCREENS } from '../constants/screens';
 import { COLORS } from '../constants/colors';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, updateUser } = useUser();
+  const { user, isLoggedIn, logOut } = useUser();
 
-  const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
+  if (!isLoggedIn) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.subtitle}>
+          Log in or create an account to continue.
+        </Text>
 
-  const handleSave = () => {
-    updateUser({
-      name,
-      email,
-    });
-  };
+        <View style={styles.guestContainer}>
+          <View style={styles.avatar}>
+            <MaterialCommunityIcons
+              name="account-outline"
+              size={56}
+              color={COLORS.primaryBrown}
+            />
+          </View>
+
+          <Text style={styles.welcomeTitle}>Welcome!</Text>
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => navigation.navigate(SCREENS.LOGIN)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryButtonText}>Log In</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => navigation.navigate(SCREENS.SIGN_UP)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.secondaryButtonText}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.title}>Profile</Text>
-      <Text style={styles.subtitle}>User profile information</Text>
 
-      <View style={styles.avatarContainer}>
+      <View style={styles.profileContainer}>
         <View style={styles.avatar}>
           <MaterialCommunityIcons
             name="account"
@@ -41,54 +62,22 @@ const ProfileScreen = ({ navigation }) => {
         </View>
 
         <Text style={styles.userName}>{user.name}</Text>
-
-        {user.email ? <Text style={styles.userEmail}>{user.email}</Text> : null}
+        <Text style={styles.userEmail}>{user.email}</Text>
       </View>
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Name</Text>
-
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Enter your name"
-          placeholderTextColor={COLORS.textSecondary}
-        />
-
-        <Text style={styles.label}>Email</Text>
-
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Enter your email"
-          placeholderTextColor={COLORS.textSecondary}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
+      <View style={styles.menu}>
         <TouchableOpacity
-          style={styles.button}
-          onPress={handleSave}
+          style={styles.menuItem}
+          onPress={() => navigation.navigate(SCREENS.PROFILE_SETTINGS)}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>Save changes</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.favoritesButton}
-          onPress={() => navigation.navigate(SCREENS.FAVORITES)}
-          activeOpacity={0.8}
-        >
-          <View style={styles.favoritesContent}>
+          <View style={styles.menuContent}>
             <MaterialCommunityIcons
-              name="heart-outline"
+              name="account-cog-outline"
               size={22}
               color={COLORS.primaryBrown}
             />
-
-            <Text style={styles.favoritesText}>My Favorites</Text>
+            <Text style={styles.menuText}>Profile Settings</Text>
           </View>
 
           <MaterialCommunityIcons
@@ -96,6 +85,61 @@ const ProfileScreen = ({ navigation }) => {
             size={24}
             color={COLORS.textSecondary}
           />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate(SCREENS.FAVORITES)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.menuContent}>
+            <MaterialCommunityIcons
+              name="heart-outline"
+              size={22}
+              color={COLORS.primaryBrown}
+            />
+            <Text style={styles.menuText}>My Favorites</Text>
+          </View>
+
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={24}
+            color={COLORS.textSecondary}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate(SCREENS.ORDER_HISTORY)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.menuContent}>
+            <MaterialCommunityIcons
+              name="receipt-text-outline"
+              size={22}
+              color={COLORS.primaryBrown}
+            />
+            <Text style={styles.menuText}>My Orders</Text>
+          </View>
+
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={24}
+            color={COLORS.textSecondary}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={logOut}
+          activeOpacity={0.8}
+        >
+          <MaterialCommunityIcons
+            name="logout"
+            size={20}
+            color={COLORS.primaryBrown}
+          />
+          <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -122,9 +166,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  avatarContainer: {
+  guestContainer: {
+    flex: 1,
     alignItems: 'center',
-    marginTop: 32,
+    justifyContent: 'center',
+    paddingBottom: 80,
+  },
+
+  profileContainer: {
+    alignItems: 'center',
+    marginTop: 40,
   },
 
   avatar: {
@@ -135,6 +186,14 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primaryBrown,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginTop: 20,
+    marginBottom: 32,
   },
 
   userName: {
@@ -150,46 +209,44 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  form: {
-    marginTop: 32,
-  },
-
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: 8,
-  },
-
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: COLORS.primaryBrown,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    color: COLORS.textPrimary,
-    fontSize: 16,
-    marginBottom: 20,
-  },
-
-  button: {
+  primaryButton: {
+    width: '100%',
     height: 52,
     borderRadius: 10,
     backgroundColor: COLORS.primaryBrown,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
   },
 
-  buttonText: {
+  primaryButtonText: {
     fontSize: 16,
     fontWeight: '700',
     color: COLORS.background,
   },
 
-  favoritesButton: {
+  secondaryButton: {
+    width: '100%',
+    height: 52,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.primaryBrown,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.primaryBrown,
+  },
+
+  menu: {
+    marginTop: 32,
+  },
+
+  menuItem: {
     minHeight: 54,
-    marginTop: 20,
     paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: COLORS.primaryBrown,
@@ -197,18 +254,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 12,
   },
 
-  favoritesContent: {
+  menuContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
 
-  favoritesText: {
+  menuText: {
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.textPrimary,
+  },
+
+  logoutButton: {
+    height: 52,
+    marginTop: 12,
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primaryBrown,
+  },
+
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.primaryBrown,
   },
 });
 
